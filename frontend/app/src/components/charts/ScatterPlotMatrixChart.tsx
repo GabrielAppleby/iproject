@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from "react";
-import {AppDispatch, RootState, useTypedSelector} from "../../app/store";
-import {projectData, selectAllScaledData, selectDataScaling, updateScaling} from "../../slices/dataSlice";
+import {RootState} from "../../app/store";
+import {selectAllScaledData} from "../../slices/dataSlice";
 import {Dimensions, withDimensions} from "../../wrappers/Dimensions";
 import * as d3 from "d3";
 import {Data} from "../../types/data";

@@ -1,8 +1,8 @@
 import React from "react";
 import {Slider} from "@material-ui/core";
 import {makeStyles} from "@material-ui/core/styles";
-import {projectData, updateScaling, selectDataScaling} from "../slices/dataSlice";
-import {connect} from "react-redux";
+import {selectDataScaling, updateScalingsAndProject} from "../slices/dataSlice";
+import {connect, ConnectedProps} from "react-redux";
 import {AppDispatch, RootState} from "../app/store";
 
 
@@ -14,17 +14,25 @@ const useStyles = makeStyles({
     }
 });
 
-interface ScalingSlidersProps {
-    readonly scaling: number[],
-    readonly updateScaling: any,
-    readonly projectData: any
-}
+const mapStateToProps = (state: RootState) => ({
+    scaling: selectDataScaling(state),
+});
 
-const ScalingSliders: React.FC<ScalingSlidersProps> = (props) => {
+const mapDispatchToProps = (dispatch: AppDispatch) => ({
+    updateScalingAndProject: (scaling: number[]) => dispatch(updateScalingsAndProject(scaling))
+});
+
+const connector = connect(
+    mapStateToProps,
+    mapDispatchToProps,
+);
+
+type PropsFromRedux = ConnectedProps<typeof connector>
+
+const ScalingSliders: React.FC<PropsFromRedux> = (props) => {
     const classes = useStyles();
     const scaling = props.scaling;
-    const updateScaling = props.updateScaling;
-    const projectData = props.projectData;
+    const updateScalingAndProject = props.updateScalingAndProject;
 
     return (
         <div className={classes.formItemDiv}>
@@ -38,8 +46,7 @@ const ScalingSliders: React.FC<ScalingSlidersProps> = (props) => {
                             if (typeof value === "number") {
                                 const newScaling = [...scaling];
                                 newScaling[+key] = value;
-                                updateScaling(newScaling);
-                                projectData();
+                                updateScalingAndProject(newScaling);
                             }
                         }}
                         valueLabelDisplay="auto"
@@ -53,16 +60,4 @@ const ScalingSliders: React.FC<ScalingSlidersProps> = (props) => {
     );
 }
 
-const mapStateToProps = (state: RootState) => ({
-    scaling: selectDataScaling(state),
-});
-
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-    updateScaling: (scaling: number[]) => dispatch(updateScaling(scaling)),
-    projectData: () => dispatch(projectData())
-});
-
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps,
-)(ScalingSliders);
+export default connector(ScalingSliders);

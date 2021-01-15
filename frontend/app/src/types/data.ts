@@ -1,4 +1,5 @@
-export type Dataset = 'iris' | 'wine' | 'ecoli';
+export type Dataset = 'iris';
+export type Projection = 'umap'
 export type Status = 'idle' | 'pending' | 'fulfilled' | 'rejected';
 
 
@@ -6,11 +7,11 @@ export interface DataInstance {
     uid: number
     features: number[]
     target: string
-    projection?: number[]
+    projections?: number[]
 }
 
 export interface ProjectedDataInstance extends DataInstance {
-    projection: number[]
+    projections: number[]
 }
 
 export type Data = DataInstance[]

@@ -2,10 +2,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all,pycharm+iml,pycharm,python,flask
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all,pycharm+iml,pycharm,python,flask
 
-raw_data
-./raw_data
 raw_data/*
-./raw_data/*
+
+migrations/*
 
 populate_db.py
 

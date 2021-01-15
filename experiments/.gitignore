@@ -2,6 +2,8 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,pycharm+all,pycharm+iml,pycharm
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,pycharm+all,pycharm+iml,pycharm
 tuning_results/*
+models/py_models/*
+models/js_models/*
 *.npz
 *.cif
 *.pkl

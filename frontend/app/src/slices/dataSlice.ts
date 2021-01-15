@@ -1,7 +1,7 @@
 import {createAsyncThunk, createEntityAdapter, createSlice, EntityState,} from '@reduxjs/toolkit';
 import {AppDispatch, RootState} from '../app/store';
 import {getData} from '../api/dataClient'
-import {Data, DataInstance, Dataset, Status} from "../types/data";
+import {Data, DataInstance, Dataset, Projection, Status} from "../types/data";
 import * as tf from "@tensorflow/tfjs";
 import {getModel} from "../api/modelClient";
 import {getDatasetEndpoint} from "../api/common";
@@ -9,6 +9,7 @@ import {getDatasetEndpoint} from "../api/common";
 
 interface DataState extends EntityState<DataInstance> {
     name: Dataset;
+    projection: Projection;
     scaling: number[];
     model?: tf.LayersModel;
     dataStatus: Status;
@@ -23,6 +24,7 @@ const dataAdapter = createEntityAdapter<DataInstance>({
 
 const initialState = dataAdapter.getInitialState({
     name: "iris",
+    projection: 'umap',
     scaling: [1, 1, 1, 1],
     dataStatus: 'idle',
     modelStatus: 'idle',
@@ -31,19 +33,49 @@ const initialState = dataAdapter.getInitialState({
 }) as DataState;
 
 
-export const fetchData = createAsyncThunk<Data, void, {state: RootState}>('data/fetchData', async (arg, thunkAPI) => {
+export const fetchData = createAsyncThunk<Data, void, { state: RootState }>('data/fetchData', async (arg, thunkAPI) => {
     const endPoint = getDatasetEndpoint(thunkAPI.getState().data.name) + 's';
 
     return await getData<Data>(endPoint);
 });
 
-export const fetchModel = createAsyncThunk<tf.LayersModel, void, {state: RootState}>('data/fetchModel', async (arg, thunkAPI) => {
+export const fetchModel = createAsyncThunk<tf.LayersModel, void, { state: RootState }>('data/fetchModel', async (arg, thunkAPI) => {
     const endPoint = getDatasetEndpoint(thunkAPI.getState().data.name) + '';
 
     return await getModel(endPoint);
 });
 
-type ProjectionChanges = { changes: { projection: number[]; }; id: number; }[];
+
+export const initApp = () => {
+    return (dispatch: AppDispatch) => {
+        return Promise.all([dispatch(fetchData()), dispatch(fetchModel())]).then(() => {
+            return dispatch(projectData())
+        })
+    }
+}
+
+export const updateScalingsAndProject = (scaling: number[]) => {
+    return (dispatch: AppDispatch) => {
+        dispatch(updateScaling(scaling))
+        return dispatch(projectData())
+    }
+}
+
+export const changeDatasetAndFetchData = (dataset: Dataset) => {
+    return (dispatch: AppDispatch) => {
+        dispatch(changeDataset(dataset))
+        return dispatch(fetchData())
+    }
+}
+
+export const changeProjectionAndFetchModel = (projection: Projection) => {
+    return (dispatch: AppDispatch) => {
+        dispatch(changeProjection(projection))
+        return dispatch(fetchModel())
+    }
+}
+
+type ProjectionChanges = { changes: { projections: number[]; }; id: number; }[];
 
 export const projectData = createAsyncThunk<ProjectionChanges,
     void,
@@ -65,7 +97,7 @@ export const projectData = createAsyncThunk<ProjectionChanges,
             return (model.predict(features) as tf.Tensor<tf.Rank.R2>).arraySync();
         });
         return predictions.map((d, i) => {
-            return {'changes': {'projection': d}, id: ids[i]}
+            return {'changes': {'projections': d}, id: ids[i]}
         });
     } else {
         return thunkAPI.rejectWithValue("Model not defined");
@@ -78,6 +110,9 @@ export const dataSlice = createSlice({
     reducers: {
         changeDataset(state, action) {
             state.name = action.payload;
+        },
+        changeProjection(state, action) {
+            state.projection = action.payload;
         },
         updateScaling(state, action) {
             state.scaling = action.payload;
@@ -125,7 +160,7 @@ export const dataSlice = createSlice({
     }
 });
 
-export const {updateScaling, modelRemoved, changeDataset} = dataSlice.actions;
+export const {updateScaling, modelRemoved, changeDataset, changeProjection} = dataSlice.actions;
 
 const dataSelecters = dataAdapter.getSelectors<RootState>(state => state.data);
 
@@ -139,6 +174,10 @@ export const selectDataScaling = (state: RootState) => {
 
 export const selectDataset = (state: RootState) => {
     return state.data.name;
+}
+
+export const selectProjection = (state: RootState) => {
+    return state.data.projection;
 }
 
 export const selectModel = (state: RootState) => {

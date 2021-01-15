@@ -1,10 +1,10 @@
 import React, {useEffect, useRef} from "react";
 
 import * as d3 from 'd3';
-import {Data, DataInstance, ProjectedData, ProjectedDataInstance} from "../../types/data";
+import {Data, ProjectedData, ProjectedDataInstance} from "../../types/data";
 import {Dimensions, withDimensions} from "../../wrappers/Dimensions";
-import {RootState, useTypedSelector} from "../../app/store";
-import {selectAllData, selectAllScaledData} from "../../slices/dataSlice";
+import {RootState} from "../../app/store";
+import {selectAllData} from "../../slices/dataSlice";
 import {COLORS, isProjected} from "./common";
 import {connect} from "react-redux";
 
@@ -35,13 +35,13 @@ interface D3RectSpec {
     readonly height: number;
 }
 
-interface D3LegendSpec {
-    readonly symbolX: number;
-    readonly textX: number;
-    readonly symbolStartY: number;
-    readonly textStartY: number;
-    readonly incrementY: number;
-}
+// interface D3LegendSpec {
+//     readonly symbolX: number;
+//     readonly textX: number;
+//     readonly symbolStartY: number;
+//     readonly textStartY: number;
+//     readonly incrementY: number;
+// }
 
 interface ExtremeValues {
     readonly minX: number;
@@ -52,7 +52,7 @@ interface ExtremeValues {
 
 const BUFFER_PROPORTION = 1 / 20;
 const MARGINS_PROPORTION = 1 / 40;
-const LEGEND_PROPORTION = 1 / 6;
+// const LEGEND_PROPORTION = 1 / 6;
 const CIRCLE_R = 2;
 
 
@@ -179,11 +179,11 @@ const removeAppendZoom = (rootG: RootSelection,
             .selectAll("circle")
             .attr('cx', function (d) {
                 const mol = d as ProjectedDataInstance
-                return newXScale(mol.projection[0])
+                return newXScale(mol.projections[0])
             })
             .attr('cy', function (d) {
                 const mol = d as ProjectedDataInstance
-                return newYScale(mol.projection[1])
+                return newYScale(mol.projections[1])
             });
     }
 
@@ -220,10 +220,10 @@ const joinCircles = (rootG: RootSelection,
         .raise()
         .attr('id', (d) => `id${d.uid}`)
         .attr('cx', function (d) {
-            return xScale(d.projection[0]) as number;
+            return xScale(d.projections[0]) as number;
         })
         .attr('cy', function (d) {
-            return yScale(d.projection[1]) as number;
+            return yScale(d.projections[1]) as number;
         })
         .attr('r', CIRCLE_R)
         .style("stroke", "black")
@@ -238,32 +238,32 @@ const joinCircles = (rootG: RootSelection,
         .style("fill", "#fff13b");
 }
 
-const updateSelectedCircle = (rootG: RootSelection, selectedMolecule: DataInstance) => {
-    const circlesG = rootG
-        .select('#circlesG');
-
-    circlesG
-        .select(".selected")
-        .attr('class', null)
-        // @ts-ignore
-        .style('fill', (d) => {
-            // Danger
-            const mol = d as DataInstance;
-            return COLORS(String(mol.target));
-        });
-
-    d3.select(`#id${selectedMolecule.uid}`)
-        .attr('class', 'selected')
-        .order()
-        .raise()
-        .style("fill", "#fff13b");
-}
+// const updateSelectedCircle = (rootG: RootSelection, selectedMolecule: DataInstance) => {
+//     const circlesG = rootG
+//         .select('#circlesG');
+//
+//     circlesG
+//         .select(".selected")
+//         .attr('class', null)
+//         // @ts-ignore
+//         .style('fill', (d) => {
+//             // Danger
+//             const mol = d as DataInstance;
+//             return COLORS(String(mol.target));
+//         });
+//
+//     d3.select(`#id${selectedMolecule.uid}`)
+//         .attr('class', 'selected')
+//         .order()
+//         .raise()
+//         .style("fill", "#fff13b");
+// }
 
 
 const getCoordsAndSpecs = (dimensions: Dimensions, labelLength: number) => {
     const {width, height} = dimensions;
     const margins = {w: width * MARGINS_PROPORTION, h: height * MARGINS_PROPORTION};
-    const legend_space = width * LEGEND_PROPORTION;
+    // const legend_space = width * LEGEND_PROPORTION;
 
     const scatterCoords = {
         startX: margins.w,
@@ -281,22 +281,22 @@ const getCoordsAndSpecs = (dimensions: Dimensions, labelLength: number) => {
         height: (height - 2 * margins.h)
     }
 
-    const legendSpec: D3LegendSpec = {
-        symbolX: width - (margins.w / 2) - legend_space,
-        textX: width - (margins.w / 2) - legend_space + 2 * CIRCLE_R,
-        symbolStartY: margins.h,
-        textStartY: margins.h + (2 * CIRCLE_R),
-        incrementY: ((labelLength / 2) * 8 * CIRCLE_R)
-    }
+    // const legendSpec: D3LegendSpec = {
+    //     symbolX: width - (margins.w / 2) - legend_space,
+    //     textX: width - (margins.w / 2) - legend_space + 2 * CIRCLE_R,
+    //     symbolStartY: margins.h,
+    //     textStartY: margins.h + (2 * CIRCLE_R),
+    //     incrementY: ((labelLength / 2) * 8 * CIRCLE_R)
+    // }
 
-    return {scatterCoords, rectSpec, legendSpec}
+    return {scatterCoords, rectSpec}
 }
 
 const getExtrema = (data: ProjectedData) => {
-    const minX = d3.min(data, d => d.projection[0]);
-    const maxX = d3.max(data, d => d.projection[0]);
-    const minY = d3.min(data, d => d.projection[1]);
-    const maxY = d3.max(data, d => d.projection[1]);
+    const minX = d3.min(data, d => d.projections[0]);
+    const maxX = d3.max(data, d => d.projections[0]);
+    const minY = d3.min(data, d => d.projections[1]);
+    const maxY = d3.max(data, d => d.projections[1]);
 
     return {minX, maxX, minY, maxY};
 }
@@ -321,7 +321,7 @@ const ScatterChart: React.FC<ProjectionChartProps> = (props) => {
             const extrema = getExtrema(data);
             const labels = Array.from(new Set(data.map(d => d.target)));
 
-            const {scatterCoords, rectSpec, legendSpec} = getCoordsAndSpecs(dimensions, labels.length);
+            const {scatterCoords, rectSpec} = getCoordsAndSpecs(dimensions, labels.length);
             if (Object.values(extrema).every(o => o !== undefined)) {
                 // @ts-ignore
                 const scales: Scales = createScales(extrema, scatterCoords);

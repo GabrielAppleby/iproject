@@ -23,5 +23,5 @@ export function isNotNullish<T>(value: T): value is NonNullable<T> {
 }
 
 export const isProjected = (x: Data): x is ProjectedData => {
-    return x[0] !== undefined && x[0].projection !== undefined;
+    return x[0] !== undefined && x[0].projections !== undefined;
 }

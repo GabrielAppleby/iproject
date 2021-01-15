@@ -1,51 +1,45 @@
 import React from "react";
 import {Select} from "@material-ui/core";
-import {selectDataset, changeDataset, fetchData} from "../slices/dataSlice";
-import {connect} from "react-redux";
+import {changeDatasetAndFetchData, selectDataset} from "../slices/dataSlice";
+import {connect, ConnectedProps} from "react-redux";
 import {AppDispatch, RootState} from "../app/store";
 import {Dataset} from "../types/data";
-
-
-interface DatasetPickerProps {
-    readonly dataset: string,
-    readonly changeDataset: any,
-    readonly fetchData: any,
-}
-
-const DatasetPicker: React.FC<DatasetPickerProps> = (props) => {
-    const dataset = props.dataset;
-    const changeDataset = props.changeDataset;
-    const fetchData = props.fetchData;
-
-    return (
-        <Select
-            native
-            value={dataset}
-            onChange={(_, value) => {
-                changeDataset(value);
-                fetchData(value);
-            }}
-            inputProps={{
-                name: 'dataset',
-                id: 'dataset-native-simple',
-            }}>
-            <option value={"iris"}>Iris</option>
-            <option value={"wine"}>Wine</option>
-            <option value={"ecoli"}>Ecoli</option>
-        </Select>
-    );
-}
 
 const mapStateToProps = (state: RootState) => ({
     dataset: selectDataset(state),
 });
 
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
-    changeDataset: (name: Dataset) => dispatch(changeDataset(name)),
-    fetchData: () => dispatch(fetchData())
+    changeDataset: (name: Dataset) => dispatch(changeDatasetAndFetchData(name)),
 });
 
-export default connect(
+const connector = connect(
     mapStateToProps,
     mapDispatchToProps,
-)(DatasetPicker);
+);
+
+type PropsFromRedux = ConnectedProps<typeof connector>
+
+
+const DatasetPicker = (props: PropsFromRedux) => {
+    const selected = props.dataset;
+    const changeSelection = props.changeDataset;
+
+
+    return (
+        <Select
+            native
+            value={selected}
+            onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                changeSelection(event.target.value as Dataset);
+            }}
+            inputProps={{
+                name: 'dataset',
+                id: 'dataset-native-simple',
+            }}>
+            <option value={'iris'}>Iris</option>
+        </Select>
+    );
+}
+
+export default connector(DatasetPicker);
