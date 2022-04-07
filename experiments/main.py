@@ -44,7 +44,7 @@ def create_db_payload(filename):
         newData.append(np.concatenate((arr, [1, 1, 1, 1])))
     newData = np.concatenate(newData, axis=0).reshape(-1, 8)
     preds = model.predict(newData)
-    np.savez('db_payload_{}.npz'.format(filename),
+    np.savez('db_payload_{}_pca.npz'.format(filename),
              features=features,
              targets=dataset.targets,
              projections=preds)
@@ -58,6 +58,7 @@ def create_models(filename):
 
 
 def main():
+    create_models(IRIS)
     create_db_payload(IRIS)
     # tune(dataset.train, dataset.val)
     # basic_scatter(preds)

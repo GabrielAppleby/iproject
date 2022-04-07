@@ -10,7 +10,11 @@ const useStyles = makeStyles({
     formItemDiv: {
         height: "100%",
         margin: "auto",
-        textAlign: "center"
+        // textAlign: "center"
+    },
+    sliderDiv: {
+        marginRight: "10%",
+        marginLeft: "10%"
     }
 });
 
@@ -39,6 +43,7 @@ const ScalingSliders: React.FC<PropsFromRedux> = (props) => {
             {Object.entries(scaling).map(
                 ([key, value]) => {
                     return <Slider
+                        className={classes.sliderDiv}
                         key={`slider_${key}`}
                         orientation="vertical"
                         value={value}

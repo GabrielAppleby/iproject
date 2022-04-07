@@ -8,9 +8,16 @@ interface DefaultAppBarProps {
 }
 
 const useStyles = makeStyles({
-    appBar: {},
-    toolbar: {},
-    heading: {}
+    appBar: {
+        height: '8%',
+        width: '100%'
+    },
+    toolbar: {
+        height: '100%'
+    },
+    heading: {
+        height: '100%'
+    }
 });
 
 export const DefaultAppBar: React.FC<DefaultAppBarProps> = ({organizationName, appName}) => {

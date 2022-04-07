@@ -25,16 +25,16 @@ services:
       - './backend/app:/usr/app'
     depends_on:
       - db_data
-#  frontend:
-#    build:
-#      dockerfile: Dockerfile.dev
-#    command: npm start 
-#    ports:
-#      - 3000:3000
-#    volumes:
-#      - './frontend/app:/usr/app'
-#    stdin_open: true
-#    working_dir: '/usr/app'
-#    depends_on:
-#      - db_data
+  frontend:
+    build:
+      dockerfile: Dockerfile.dev
+    command: npm start 
+    ports:
+      - 3000:3000
+    volumes:
+      - './frontend/app:/usr/app'
+    stdin_open: true
+    working_dir: '/usr/app'
+    depends_on:
+      - db_data
 

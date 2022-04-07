@@ -230,6 +230,8 @@ const joinCircles = (rootG: RootSelection,
         .style("stroke-width", .25)
         // @ts-ignore
         .style("fill", (d) => {
+            console.log(d.target)
+            console.log(COLORS(String(d.target)))
             return COLORS(String(d.target));
         });
 

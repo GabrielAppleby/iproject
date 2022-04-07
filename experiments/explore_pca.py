@@ -5,11 +5,13 @@ from typing import Tuple, List, NamedTuple, Collection
 import numpy as np
 import umap
 from sklearn.datasets import load_iris, fetch_openml, load_wine
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from tqdm import tqdm
 
 from data.pca import WrappedPCA
+from visualization.scatterplots import basic_scatter_labeled
 
 DATA_FOLDER: str = pathlib.Path(__file__).parent
 
@@ -213,8 +215,8 @@ def train_val_test_split(features: np.ndarray, projections: np.ndarray) -> Tuple
 
 
 def main():
+    bunch = load_iris()
     datasets: List[Tuple] = [(fetch_iris, IRIS)]
-    # datasets: List[Tuple] = [(fetch_ecoli, ECOLI), (fetch_wine, WINE)]
     np.random.seed(42)
 
     for dataset_fnc, name in datasets:
@@ -222,32 +224,20 @@ def main():
         features, targets = standardize_datatypes(features, targets)
         features = normalize_data(features)
 
-        np.savez(pathlib.Path(DATA_FOLDER, UNSPLIT_FILE_NAME_TEMPLATE.format(name)),
-                 features=features,
-                 targets=targets)
+        unscaled_projection = PCA(n_components=2).fit_transform(features)
+        basic_scatter_labeled(unscaled_projection, targets.reshape(-1), [1, 1, 1, 1])
+        for scalings in [np.array([0, 1, 1, 1]),
+                         np.array([1, 0, 1, 1]),
+                         np.array([1, 1, 0, 1]),
+                         np.array([1, 1, 1, 0])]:
+            scaled_features = np.multiply(features, scalings)
 
-        scaled_features, all_scalings = scale_data(features, POSSIBLE_SCALING_VALUES)
-        projected, projected_scaled = project_data(features, scaled_features)
+            min_idx = np.argmin(scalings)
+            assert np.all(scaled_features[:, min_idx] == 0)
 
-        repeated_features = np.concatenate([features] * len(all_scalings), axis=0)
-        nn_features = np.concatenate((repeated_features, np.concatenate(all_scalings, axis=0)), axis=1)
-        nn_projections = np.concatenate([projected] + projected_scaled, axis=0)
-        nn_projections = normalize_data(nn_projections)
+            scaled_projection = PCA(n_components=2).fit_transform(scaled_features)
+            basic_scatter_labeled(scaled_projection, targets.reshape(-1), list(scalings))
 
-        features_train, \
-        features_val, \
-        features_test, \
-        projections_train, \
-        projections_val, \
-        projections_test = train_val_test_split(nn_features, nn_projections)
-
-        np.savez(pathlib.Path(DATA_FOLDER, FILE_NAME_TEMPLATE.format(name)),
-                 features_train=features_train,
-                 features_val=features_val,
-                 features_test=features_test,
-                 projections_train=projections_train,
-                 projections_val=projections_val,
-                 projections_test=projections_test)
 
 
 if __name__ == '__main__':

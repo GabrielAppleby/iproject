@@ -3,34 +3,40 @@ import {useDispatch} from "react-redux";
 import React, {useEffect} from "react";
 import {initApp, modelRemoved} from "./slices/dataSlice";
 import {DefaultAppBar} from "./components/DefaultAppBar";
-import {Grid} from "@material-ui/core";
 import ResponsiveScatterChart from "./components/charts/ScatterChart";
 import ResponsiveScatterPlotMatrixChart from "./components/charts/ScatterPlotMatrixChart";
 import ResponsiveParallelCoordinatesChart from "./components/charts/ParallelCoordinatesChart";
 import ScalingSliders from "./components/ScalingSliders";
-import DatasetPicker from "./components/DatasetPicker";
-import ProjectionPicker from "./components/ProjectionPicker";
-
 
 const useStyles = makeStyles({
     app: {
         height: '96vh',
-        display: 'flex',
-        flexDirection: 'column'
+        width: '100vw'
     },
     mainGrid: {
-        height: '1%',
-        flexGrow: 1
+        overflow: 'hidden',
+        height: '92%',
+        width: '100%'
     },
-    chartGridContainer: {
-        height: '40%'
+    chartTopContainer: {
+        height: '80%',
+        width: '100%'
     },
-    bottomGridContainer: {
-        height: '20%'
+    chartBottomContainer: {
+        marginTop: '2%',
+        marginBottom: '2%',
+        height: '16%',
+        width: '100%'
     },
-    controls: {
-        margin: 'auto',
-        textAlign: 'center'
+    chartTopInnerContainer: {
+        height: '100%',
+        width: '50%',
+        float: 'left'
+    },
+    chartTopInnerRightContainer: {
+        height: '50%',
+        width: '100%',
+        float: 'left'
     }
 });
 
@@ -52,29 +58,25 @@ export const DefaultPanel: React.FC = (props) => {
     return (
         <>
             <div className={classes.app}>
-                <DefaultAppBar organizationName={"VALT"} appName={"iProject"}/>
-                <Grid container item className={classes.mainGrid}>
-                    <Grid item xs={12} md={6} className={classes.chartGridContainer}>
-                        <ResponsiveScatterChart/>
-                    </Grid>
-                    <Grid item xs={12} md={6} className={classes.chartGridContainer}>
-                        <ResponsiveScatterPlotMatrixChart/>
-                    </Grid>
-                    <Grid item xs={12} className={classes.chartGridContainer}>
-                        <ResponsiveParallelCoordinatesChart/>
-                    </Grid>
-                    <Grid item xs={12} sm={8} className={classes.bottomGridContainer}>
+                {/*<DefaultAppBar organizationName={"VALT"} appName={"iProject"}/>*/}
+                <div className={classes.mainGrid}>
+                    <div className={classes.chartTopContainer}>
+                        <div className={classes.chartTopInnerContainer}>
+                            <ResponsiveScatterChart/>
+                        </div>
+                        <div className={classes.chartTopInnerContainer}>
+                            <div className={classes.chartTopInnerRightContainer}>
+                                <ResponsiveScatterPlotMatrixChart/>
+                            </div>
+                            <div className={classes.chartTopInnerRightContainer}>
+                                <ResponsiveParallelCoordinatesChart/>
+                            </div>
+                        </div>
+                    </div>
+                    <div className={classes.chartBottomContainer}>
                         <ScalingSliders/>
-                    </Grid>
-                    <Grid container item xs={12} sm={4}>
-                        <Grid item xs={12} sm={2} className={classes.controls}>
-                            <DatasetPicker/>
-                        </Grid>
-                        <Grid item xs={12} sm={2} className={classes.controls}>
-                            <ProjectionPicker/>
-                        </Grid>
-                    </Grid>
-                </Grid>
+                    </div>
+                </div>
             </div>
         </>
     );

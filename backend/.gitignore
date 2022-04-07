@@ -6,8 +6,6 @@ raw_data/*
 
 migrations/*
 
-populate_db.py
-
 ### Flask ###
 instance/*
 !instance/.gitignore

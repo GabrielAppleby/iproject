@@ -10,10 +10,10 @@ services:
       context: ./backend
     depends_on:
       - db
-#  frontend:
-#    build: 
-#      context: ./frontend
-#    depends_on:
-#      - backend
-#      - db
+  frontend:
+    build: 
+      context: ./frontend
+    depends_on:
+      - backend
+      - db
 

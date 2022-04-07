@@ -6,8 +6,8 @@ from tensorflow import keras
 JS_MODELS_FOLDER = pathlib.Path(pathlib.Path(__file__).parent, 'js_models')
 PY_MODELS_FOLDER = pathlib.Path(pathlib.Path(__file__).parent, 'py_models')
 
-IRIS_JS_FOLDER = pathlib.Path(JS_MODELS_FOLDER, 'iris')
-IRIS_PY_FOLDER = pathlib.Path(JS_MODELS_FOLDER, 'iris')
+IRIS_JS_FOLDER = pathlib.Path(JS_MODELS_FOLDER, 'iris_pca')
+IRIS_PY_FOLDER = pathlib.Path(JS_MODELS_FOLDER, 'iris_pca')
 
 
 def save_model_for_js(model, dataset_name):

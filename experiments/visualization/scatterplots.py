@@ -8,3 +8,11 @@ def basic_scatter(projection):
     sns.scatterplot(x, y)
     plt.show()
     plt.clf()
+
+
+def basic_scatter_labeled(projection, labels, scaling):
+    x = projection[:, 0]
+    y = projection[:, 1]
+    sns.scatterplot(x, y, hue=labels).set_title(scaling)
+    plt.savefig('{}.png'.format(scaling))
+    plt.clf()
