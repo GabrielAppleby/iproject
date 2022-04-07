@@ -1,4 +1,5 @@
 import pathlib
+import random
 from itertools import product
 from typing import Tuple, List, NamedTuple, Collection
 
@@ -16,10 +17,13 @@ DATA_FOLDER: str = pathlib.Path(__file__).parent
 IRIS: str = 'iris'
 ECOLI: str = 'ecoli'
 WINE: str = 'wine'
-FILE_NAME_TEMPLATE: str = '{}_pca.npz'
-UNSPLIT_FILE_NAME_TEMPLATE: str = '{}_unsplit_pca.npz'
+# FILE_NAME_TEMPLATE: str = '{}_pca.npz'
+# UNSPLIT_FILE_NAME_TEMPLATE: str = '{}_unsplit_pca.npz'
+FILE_NAME_TEMPLATE: str = '{}.npz'
+UNSPLIT_FILE_NAME_TEMPLATE: str = '{}_unsplit.npz'
+DB_PAYLOAD_FILE_NAME_TEMPLATE: str = '{}_db_payload.npz'
 
-POSSIBLE_SCALING_VALUES: List[float] = [.25, .5, .75, 1]
+POSSIBLE_SCALING_VALUES: List[float] = [0, .25, .5, .75, 1]
 
 
 class DataSplit(NamedTuple):
@@ -43,8 +47,9 @@ class UnsplitDataSet(NamedTuple):
     """
     A db dataset.
     """
-    features: np.ndarray
-    targets: np.ndarray
+    features: List[np.ndarray]
+    projections: List[np.ndarray]
+    targets: np.array
 
 
 def load_data(name: str) -> DataSet:
@@ -73,9 +78,17 @@ def load_unsplit_data(name: str) -> UnsplitDataSet:
     :return: The training, val, and test data.
     """
     data = np.load(pathlib.Path(DATA_FOLDER, UNSPLIT_FILE_NAME_TEMPLATE.format(name)))
+    features = data['features']
+    projections = data['projections']
+    targets = data['targets']
 
-    full_split = UnsplitDataSet(data['features'], data['targets'])
+    features_list = []
+    projections_list = []
+    for i in range(150, len(features), 150):
+        features_list.append(features[i-150: i])
+        projections_list.append(projections[i-150: i])
 
+    full_split = UnsplitDataSet(features_list, projections_list, targets)
     return full_split
 
 
@@ -104,7 +117,7 @@ def fetch_ecoli() -> Tuple[np.ndarray, np.ndarray]:
     """
     features, labels = fetch_openml('ecoli', version=1, return_X_y=True)
     le = LabelEncoder()
-    return features, le.fit_transform(labels)
+    return features.values, le.fit_transform(labels)
 
 
 def standardize_datatypes(
@@ -154,24 +167,25 @@ def scale_data(
     :param possible_scaling_values: The possible scaling values. Can be any number of values v.
     :return: All variations of the scaled features (n*product(v, d) - 1, d)., and all scalings
     (n*product(v, d), d). There is one fewer scaled features since we don't count the "unscaled
-    scaling" (1, 1, 1, 1).
+    scaling" (1, 1, 1, 1). The lists are shuffled
     """
     n, d = features.shape
     scaled_features = []
     scalings = []
 
-    unscaled_scaling = (1,) * d
-    scalings.append(repeat_n_times(unscaled_scaling, n))
-
     for scaling in product(possible_scaling_values, repeat=d):
-        if scaling != unscaled_scaling:
-            scaled_features.append(features * scaling)
-            scalings.append(repeat_n_times(scaling, n))
+        scaled_features.append(features * scaling)
+        scalings.append(repeat_n_times(scaling, n))
+
+    temp = list(zip(scaled_features, scalings))
+    random.shuffle(temp)
+    scaled_features, scalings = zip(*temp)
+
     return scaled_features, scalings
 
 
 def project_data(unscaled_features: np.ndarray,
-                 scaled_features: List[np.ndarray]) -> Tuple[np.ndarray, List[np.ndarray]]:
+                 scaled_features: List[np.ndarray]) -> List[np.ndarray]:
     """
     Project the data, using the a projection of the unscaled features as an initial embedding.
     :param unscaled_features: The unscaled features used to create the initial embedding.
@@ -214,25 +228,30 @@ def train_val_test_split(features: np.ndarray, projections: np.ndarray) -> Tuple
 
 def main():
     datasets: List[Tuple] = [(fetch_iris, IRIS)]
-    # datasets: List[Tuple] = [(fetch_ecoli, ECOLI), (fetch_wine, WINE)]
     np.random.seed(42)
+    datasets: List[Tuple] = [(fetch_iris, IRIS)]
 
     for dataset_fnc, name in datasets:
         features, targets = dataset_fnc()
         features, targets = standardize_datatypes(features, targets)
         features = normalize_data(features)
 
-        np.savez(pathlib.Path(DATA_FOLDER, UNSPLIT_FILE_NAME_TEMPLATE.format(name)),
+        np.savez(pathlib.Path(DATA_FOLDER, DB_PAYLOAD_FILE_NAME_TEMPLATE.format(name)),
                  features=features,
                  targets=targets)
 
         scaled_features, all_scalings = scale_data(features, POSSIBLE_SCALING_VALUES)
-        projected, projected_scaled = project_data(features, scaled_features)
+        projected_scaled = project_data(features, scaled_features)
 
         repeated_features = np.concatenate([features] * len(all_scalings), axis=0)
         nn_features = np.concatenate((repeated_features, np.concatenate(all_scalings, axis=0)), axis=1)
-        nn_projections = np.concatenate([projected] + projected_scaled, axis=0)
+        nn_projections = np.concatenate(projected_scaled, axis=0)
         nn_projections = normalize_data(nn_projections)
+
+        np.savez(pathlib.Path(DATA_FOLDER, UNSPLIT_FILE_NAME_TEMPLATE.format(name)),
+                 features=nn_features,
+                 projections=nn_projections,
+                 targets=targets)
 
         features_train, \
         features_val, \

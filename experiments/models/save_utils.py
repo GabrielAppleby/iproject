@@ -1,7 +1,7 @@
+import tensorflow as tf
 import pathlib
 
 import tensorflowjs as tfjs
-from tensorflow import keras
 
 JS_MODELS_FOLDER = pathlib.Path(pathlib.Path(__file__).parent, 'js_models')
 PY_MODELS_FOLDER = pathlib.Path(pathlib.Path(__file__).parent, 'py_models')
@@ -18,5 +18,5 @@ def save_model_for_py(model, dataset_name):
     model.save(pathlib.Path(PY_MODELS_FOLDER, dataset_name))
 
 
-def load_model_for_py(dataset_name):
-    return keras.models.load_model(pathlib.Path(PY_MODELS_FOLDER, dataset_name))
+def load_model_for_py(dataset_name) -> tf.keras.Model:
+    return tf.keras.models.load_model(pathlib.Path(PY_MODELS_FOLDER, dataset_name))

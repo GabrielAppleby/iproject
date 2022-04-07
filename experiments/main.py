@@ -3,10 +3,11 @@ import numpy as np
 from kerastuner import BayesianOptimization
 from tensorflow import keras
 
-from data.data_processor import IRIS, load_data, load_unsplit_data
+from data.data_processor import IRIS, load_data, load_unsplit_data, DataSplit
 from models.basic import build_basic_model
 from models.save_utils import save_model_for_js, save_model_for_py, load_model_for_py
 from models.tuning import build_model
+from visualization.scatterplots import basic_scatter, movement_scatter
 
 
 def tune(train, val):
@@ -14,18 +15,19 @@ def tune(train, val):
         build_model,
         objective='val_loss',
         max_trials=512,
-        directory='tuning_results',
-        project_name='ipca_iris')
+        directory='tuning_results_distances_sampled',
+        project_name='ipca_iris_distances_sampled')
 
     tuner.search(train.features,
                  train.projections,
                  epochs=300,
+                 verbose=1,
                  validation_data=(val.features, val.projections),
-                 callbacks=[keras.callbacks.EarlyStopping(patience=8, restore_best_weights=True)])
+                 callbacks=[keras.callbacks.EarlyStopping(patience=16, restore_best_weights=True)])
     print(tuner.get_best_hyperparameters()[0].get_config())
 
 
-def train(train, val):
+def train(train, val) -> keras.Model:
     model = build_basic_model()
     model.fit(train.features,
               train.projections,
@@ -33,7 +35,6 @@ def train(train, val):
               validation_data=(val.features, val.projections),
               callbacks=[keras.callbacks.EarlyStopping(patience=8, restore_best_weights=True)])
     return model
-
 
 def create_db_payload(filename):
     dataset = load_unsplit_data(filename)
@@ -49,12 +50,20 @@ def create_db_payload(filename):
              targets=dataset.targets,
              projections=preds)
 
-
 def create_models(filename):
     dataset = load_data(filename)
     model = train(dataset.train, dataset.val)
+    model.evaluate(dataset.train.features, dataset.train.projections)
     save_model_for_py(model, filename)
     save_model_for_js(model, filename)
+
+
+def testing(name):
+    dataset = load_unsplit_data(name)
+    model = load_model_for_py(name)
+    for true, features in zip(dataset.projections[0:20], dataset.features[0:20]):
+        preds = model.predict(features)
+        movement_scatter(true, preds, dataset.targets, features[0][4:])
 
 
 def main():

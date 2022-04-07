@@ -1,0 +1,23 @@
+def euclidian_dist(A, B):
+  row_norms_A = tf.reduce_sum(tf.square(A), axis=1)
+  row_norms_A = tf.reshape(row_norms_A, [-1, 1])  # Column vector.
+
+  row_norms_B = tf.reduce_sum(tf.square(B), axis=1)
+  row_norms_B = tf.reshape(row_norms_B, [1, -1])  # Row vector.
+
+  answer = row_norms_A - 2 * tf.matmul(A, tf.transpose(B)) + row_norms_B
+
+  return tf.sqrt(answer + 1e-6)
+
+scaled_features, all_scalings = scale_data(features, POSSIBLE_SCALING_VALUES)
+        projected_scaled = project_data(features, scaled_features)
+        scaled_distances = []
+        for sf in scaled_features:
+            scaled_distances.append(euclidian_dist(sf, sf).numpy())
+
+nn_features = np.concatenate(scaled_distances, axis=0)
+        nn_projections = np.concatenate(projected_scaled, axis=0)
+
+np.savez(pathlib.Path(DATA_FOLDER, FILE_NAME_TEMPLATE.format(name + 'testdistances')),
+                 features=nn_features,
+                 targets=nn_projections)
